@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Flako's Grill · Ordering demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="images.js"></script>
+<style>
+:root{
+  --or:#F7941D; --or2:#FFB547; --red:#D7262A; --blk:#141210; --cream:#FFF6EA; --line:#F0DCC2;
+  --mute:#7A6656; --ok:#1E9E57;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--cream);color:var(--blk);font-family:'Rubik',system-ui,sans-serif;font-size:15px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input,select{font:inherit;color:var(--blk);background:#fff;border:2px solid var(--line);border-radius:12px;padding:12px;width:100%}
+input:focus,select:focus{outline:none;border-color:var(--or)}
+.h{font-family:'Bowlby One',Impact,sans-serif;text-transform:uppercase;letter-spacing:.01em;line-height:1}
+
+/* demo bar (pitch controls, not part of the app) */
+.demobar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:space-between;
+  padding:8px 12px;background:#2a2a2a;color:#ccc;font-size:12px}
+.demobar b{color:#fff}
+.chips{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.chips span{margin-right:4px}
+.chips button{padding:5px 10px;border-radius:999px;background:#444;color:#ddd;font-weight:700;font-size:12px}
+.chips button.on{background:var(--or);color:var(--blk)}
+.kb{position:relative}
+.badge{display:inline-grid;place-items:center;min-width:17px;height:17px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;margin-left:4px;padding:0 4px}
+
+/* ===== customer app ===== */
+#customer{max-width:470px;margin:0 auto;min-height:100vh;background:var(--cream);padding-bottom:110px;position:relative}
+.top{background:var(--or);padding:14px 16px 0;position:relative;overflow:hidden}
+.top:after{content:"";position:absolute;left:0;right:0;bottom:0;height:26px;background:var(--cream);border-radius:26px 26px 0 0}
+.toprow{display:flex;justify-content:space-between;align-items:center}
+.lang{display:flex;background:rgba(0,0,0,.12);border-radius:999px;padding:3px;font-size:12px;font-weight:800}
+.lang button{padding:5px 9px;border-radius:999px}
+.lang button.on{background:var(--blk);color:#fff}
+.open{font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.35);padding:5px 10px;border-radius:999px}
+.open i{width:8px;height:8px;border-radius:50%;background:var(--ok)} .open i.off{background:var(--red)}
+.brand{display:flex;flex-direction:column;align-items:center;padding:10px 0 34px;position:relative;z-index:1}
+.brand img{width:150px;height:150px;border-radius:50%;border:5px solid var(--blk);box-shadow:0 8px 0 rgba(0,0,0,.18);background:var(--or)}
+.brand p{margin-top:12px;font-weight:700;font-size:14px;text-align:center}
+.truck{margin:-6px 16px 0;position:relative;z-index:2;background:var(--blk);color:#fff;border-radius:18px;padding:14px 16px;display:flex;gap:12px;align-items:center}
+.pin{flex:none;width:44px;height:44px;border-radius:50%;background:var(--or);display:grid;place-items:center}
+.truck small{display:block;color:var(--or2);font-weight:800;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.truck .h{font-size:22px;margin-top:3px}
+.truck .ph{font-size:12.5px;color:#bbb;margin-top:3px}
+.cats{display:flex;gap:14px;overflow-x:auto;padding:20px 16px 6px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cat{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:800;width:66px}
+.cat .ring{width:64px;height:64px;border-radius:50%;padding:3px;background:transparent;border:3px solid var(--line)}
+.cat.on .ring{border-color:var(--red)}
+.cat .bub{width:100%;height:100%;border-radius:50%;background:var(--or);display:grid;place-items:center}
+.cat svg{width:28px;height:28px}
+.sec{padding:8px 16px}
+.sec .h{font-size:26px;margin:10px 0 4px}
+.sec .sub{color:var(--mute);font-size:13px;margin-bottom:12px}
+.item{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:#fff;border:2px solid var(--line);border-radius:16px;padding:14px;margin-bottom:9px}
+.item .nm{font-weight:800;font-size:17px}
+.item .en{color:var(--mute);font-size:13px}
+.item .pr{margin-top:5px;font-weight:800;color:var(--red);font-size:14px}
+.item .grow{flex:1}
+.plus{flex:none;width:40px;height:40px;border-radius:12px;background:var(--blk);color:var(--or);font-size:24px;font-weight:800;display:grid;place-items:center}
+.item.out{opacity:.45;pointer-events:none}
+.item.out .pr{color:var(--mute)}
+.cartbar{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;width:min(438px,calc(100% - 28px));z-index:20;display:flex;justify-content:space-between;align-items:center;
+  padding:16px 18px;border-radius:18px;background:var(--red);color:#fff;font-weight:800;font-size:16px;box-shadow:0 10px 0 rgba(0,0,0,.15)}
+.cartbar .cnt{background:#fff;color:var(--red);border-radius:8px;padding:1px 8px;margin-right:8px}
+.hidden{display:none!important}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(20,18,16,.6);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:min(470px,100%);max-height:90vh;overflow:auto;background:var(--cream);border-radius:24px 24px 0 0;padding:20px 16px 24px;animation:up .2s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.sheet .h{font-size:28px}
+.sheet .en{color:var(--mute);margin:4px 0 6px}
+.lbl{font-size:11.5px;font-weight:800;color:var(--mute);text-transform:uppercase;letter-spacing:.1em;margin:16px 0 8px}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.opt{background:#fff;border:2px solid var(--line);border-radius:14px;padding:11px 8px;text-align:center}
+.opt b{display:block;font-size:14px} .opt span{font-size:13px;font-weight:800;color:var(--red)}
+.opt.on{border-color:var(--blk);background:var(--or)} .opt.on span{color:var(--blk)}
+.qty{display:flex;align-items:center;gap:14px}
+.qty button{width:44px;height:44px;border-radius:12px;background:#fff;border:2px solid var(--line);font-size:22px;font-weight:800}
+.qty b{min-width:20px;text-align:center;font-size:20px}
+.cta{width:100%;margin-top:18px;padding:16px 18px;border-radius:16px;background:var(--red);color:#fff;font-weight:800;font-size:16px;display:flex;justify-content:space-between}
+.cta:disabled{background:#d9c8b4;color:#fff;cursor:not-allowed}
+.ghost{width:100%;margin-top:8px;padding:13px;border-radius:16px;border:2px solid var(--line);font-weight:800;color:var(--mute);background:#fff}
+.line{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:2px dashed var(--line)}
+.line .x{color:var(--mute);font-size:13px}
+.rm{color:var(--red);font-size:12px;font-weight:800;margin-top:4px}
+.tot{display:flex;justify-content:space-between;font-size:20px;font-weight:800;margin-top:12px}
+.confirmtruck{margin-top:16px;background:var(--blk);color:#fff;border-radius:16px;padding:12px 14px;display:flex;gap:10px;align-items:center}
+.confirmtruck .pin{width:36px;height:36px}
+.confirmtruck small{color:var(--or2);font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:block}
+.confirmtruck b{font-size:17px}
+.paygrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.paygrid .opt{text-align:left;padding:12px}
+.err{color:var(--red);font-weight:700;font-size:13px;margin-top:10px}
+
+/* tracker */
+.track{padding:0 16px}
+.trackhead{background:var(--or);margin:0 -16px;padding:18px 16px 26px;text-align:center;border-radius:0 0 26px 26px}
+.trackhead img{width:84px;height:84px;border-radius:50%;border:4px solid var(--blk)}
+.trackhead .h{font-size:26px;margin-top:10px}
+.ticketbig{background:#fff;border:2px solid var(--line);border-radius:20px;margin-top:-14px;padding:18px;text-align:center;position:relative}
+.ticketbig .num{font-family:'Bowlby One';font-size:70px;color:var(--red);line-height:1.05}
+.ticketbig .where{margin-top:10px;background:var(--blk);color:#fff;border-radius:14px;padding:10px;font-weight:800}
+.ticketbig .where span{color:var(--or2)}
+.steps{margin-top:16px;display:grid;gap:8px}
+.step{display:flex;gap:12px;align-items:center;padding:13px 14px;border-radius:14px;background:#fff;border:2px solid var(--line);font-weight:800;color:#bba792}
+.step i{width:28px;height:28px;border-radius:50%;border:3px solid var(--line);display:grid;place-items:center;font-style:normal;font-size:13px}
+.step.done{color:var(--blk)} .step.done i{background:var(--ok);border-color:var(--ok);color:#fff}
+.step.now{color:var(--blk);border-color:var(--or);background:#FFF1DC} .step.now i{border-color:var(--or);background:var(--or);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(247,148,29,.3)}}
+
+/* ===== kitchen ===== */
+#kitchen{min-height:100vh;background:#1a1714;color:#fff;padding:14px}
+.khead{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;margin-bottom:14px}
+.kbrand{display:flex;align-items:center;gap:12px}
+.kbrand img{width:54px;height:54px;border-radius:50%;border:3px solid var(--or)}
+.kbrand .h{font-size:22px} .kbrand small{color:var(--or2);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.kstats{display:flex;gap:8px;flex-wrap:wrap}
+.kstat{background:#2a2420;border-radius:12px;padding:8px 14px;font-size:12px;color:#c7b7a6}
+.kstat b{display:block;font-size:20px;color:#fff}
+.kbtn{padding:10px 14px;border-radius:12px;background:var(--or);color:var(--blk);font-weight:800;font-size:13px}
+.board{display:grid;grid-template-columns:repeat(3,minmax(250px,1fr));gap:12px;overflow-x:auto}
+.col{background:#25201c;border-radius:16px;padding:12px;min-height:58vh}
+.col h2{font-family:'Bowlby One';text-transform:uppercase;font-size:17px;font-weight:400;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:2px 4px}
+.col h2 em{font-style:normal;font-family:Rubik;font-weight:800;font-size:13px;background:#3a322b;border-radius:8px;padding:2px 9px}
+.c-new h2{color:var(--or2)} .c-grill h2{color:#ff7a45} .c-ready h2{color:#55d68f}
+.ticket{background:#FFF6EA;color:var(--blk);border-radius:6px 6px 14px 14px;padding:12px;margin-bottom:10px;position:relative;box-shadow:0 4px 0 rgba(0,0,0,.35);animation:drop .3s ease-out}
+@keyframes drop{from{transform:translateY(-10px);opacity:0}}
+.ticket:before{content:"";position:absolute;left:0;right:0;top:-6px;height:6px;background:radial-gradient(circle at 6px 6px,#25201c 4px,transparent 4.5px) 0 0/12px 12px repeat-x}
+.t-top{display:flex;justify-content:space-between;align-items:baseline}
+.t-num{font-family:'Bowlby One';font-size:28px}
+.t-time{font-weight:800;font-size:12.5px;padding:2px 8px;border-radius:6px;background:var(--line)}
+.t-time.warn{background:var(--or)} .t-time.late{background:var(--red);color:#fff}
+.t-who{font-size:13px;margin:3px 0 8px;color:var(--mute)} .t-who b{color:var(--blk)}
+.t-items{border-top:2px dashed #e0c9ad;padding-top:8px;font-size:14px}
+.t-items div{margin-bottom:5px} .t-items b{font-size:15px}
+.t-items small{display:block;color:#a0552c;font-weight:700;margin-left:22px}
+.t-foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;font-weight:800}
+.pay{padding:3px 8px;border-radius:6px;background:var(--ok);color:#fff} .pay.cash{background:var(--blk);color:var(--or)}
+.bump{width:100%;margin-top:9px;padding:12px;border-radius:10px;font-weight:800;background:var(--blk);color:#fff}
+.c-new .bump{background:var(--or);color:var(--blk)} .c-grill .bump{background:var(--ok);color:#fff}
+.empty{color:#8a7a6b;text-align:center;font-size:13px;padding:30px 10px;border:2px dashed #3a322b;border-radius:12px}
+.eighty6{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.eighty6 button{padding:7px 11px;border-radius:999px;background:#2a2420;color:#ddd;font-size:12.5px;font-weight:700}
+.eighty6 button.out{background:var(--red);color:#fff;text-decoration:line-through}
+.klbl{font-size:11.5px;font-weight:800;color:#a8957f;text-transform:uppercase;letter-spacing:.1em;margin-top:22px}
+.done-list{margin-top:12px;font-size:13px;color:#a8957f}
+.toast{position:fixed;left:50%;top:56px;transform:translateX(-50%);background:var(--blk);color:var(--or);font-weight:800;padding:10px 16px;border-radius:12px;z-index:90;animation:drop .3s}
+@media (max-width:820px){.board{grid-template-columns:repeat(3,82vw)}}
+</style>
+</head>
+<body>
+
+<div class="demobar">
+  <div><b>A3D pitch demo</b> · not live, orders are not real</div>
+  <div class="chips"><span>Truck QR opens:</span>
+    <button data-truck="caracasbaai">Caracasbaai</button><button data-truck="santamaria">Sta Maria</button><button data-truck="beachstation">Beach Station</button></div>
+  <div class="chips"><button id="vCust" class="on">Customer phone</button><button id="vKit" class="kb">Truck kitchen<span id="kBadge" class="badge hidden">0</span></button></div>
+</div>
+
+<main id="customer"></main>
+<main id="kitchen" class="hidden"></main>
+<div id="layer"></div>
+
+<script>
+/* ---------- trucks: each QR / link opens ONE truck, no switching inside the app ---------- */
+const TRUCKS={
+  caracasbaai:{nm:"Caracasbaaiweg",tel:"697-6181"},
+  santamaria:{nm:"Sta Maria",tel:"663-9666"},
+  beachstation:{nm:"Beach Station",tel:"666-1166"}
+};
+let truck=TRUCKS[location.hash.slice(1)]?location.hash.slice(1):"caracasbaai";
+
+/* ---------- menu ---------- */
+const STY=["Pan","Flakito","Mediano","Grandi","Plain","Salad","Burrito"];
+const MEATS=[
+ {id:"galina",nm:"Galina",en:{en:"Chicken",pap:"Galiña",es:"Pollo"},p:{Pan:12,Flakito:13,Mediano:15,Grandi:20,Plain:12,Salad:20,Burrito:12}},
+ {id:"porchop",nm:"Porchop",en:{en:"Pork chop",pap:"Karni di porko",es:"Chuleta de cerdo"},p:{Pan:13,Flakito:10,Mediano:15,Grandi:23,Plain:15,Salad:22,Burrito:12}},
+ {id:"speribs",nm:"Speribs",en:{en:"Spareribs",pap:"Speribs",es:"Costillas"},p:{Flakito:10,Mediano:15,Grandi:22,Plain:15,Salad:20}},
+ {id:"chorizo",nm:"Chorizo",en:{en:"Chorizo sausage",pap:"Chorizo",es:"Chorizo"},p:{Pan:13,Flakito:10,Mediano:17,Grandi:22,Plain:15,Salad:22,Burrito:12}},
+ {id:"steak",nm:"Steak",en:{en:"Steak",pap:"Steak",es:"Bistec"},p:{Pan:14,Flakito:13,Mediano:17,Grandi:26,Plain:22,Salad:22,Burrito:15}},
+ {id:"lomito",nm:"Lomito",en:{en:"Beef tenderloin",pap:"Lomito",es:"Lomito"},p:{Pan:18,Mediano:16,Grandi:26,Plain:22,Salad:24,Burrito:13}},
+ {id:"karko",nm:"Karko",en:{en:"Local conch",pap:"Karkó",es:"Caracol"},p:{Pan:18,Flakito:20,Grandi:30,Plain:24,Salad:26,Burrito:18}},
+ {id:"kabaron",nm:"Kabaron",en:{en:"Shrimp",pap:"Kabaron",es:"Camarones"},p:{Pan:22,Grandi:27,Plain:24,Salad:29}},
+ {id:"ribeye",nm:"Ribeye",en:{en:"Ribeye",pap:"Ribeye",es:"Ribeye"},p:{Pan:22,Grandi:35,Plain:30,Salad:32,Burrito:22}},
+ {id:"picanha",nm:"Picanha",en:{en:"Picanha",pap:"Picanha",es:"Picaña"},p:{Grandi:35,Plain:30,Salad:23}},
+];
+const MIXM=["Galina","Porchop","Speribs","Chorizo","Steak","Lomito"];
+const PLATS=[
+ {id:"mix2",nm:"Mix 2",en:{en:"Pick 2 meats",pap:"Skohe 2 karni",es:"Elige 2 carnes"},pick:2,p:{Grandi:28,Plain:28,Salad:37}},
+ {id:"mix3",nm:"Mix 3",en:{en:"Pick 3 meats",pap:"Skohe 3 karni",es:"Elige 3 carnes"},pick:3,p:{Grandi:35,Plain:35,Salad:45}},
+ {id:"st",nm:"Surf & Turf",en:{en:"Land and sea",pap:"Tera i laman",es:"Mar y tierra"},p:{Grandi:42}},
+ {id:"std",nm:"Surf & Turf Deluxe",en:{en:"The big one",pap:"Esun grandi",es:"El grande"},p:{Grandi:50}},
+];
+const SIMPLE={
+ burgers:[{id:"fburger",nm:"Flako's Burger",en:{en:"House burger off the grill",pap:"Burger di kas",es:"La burger de la casa"},price:20},
+          {id:"pburger",nm:"Picanha Burger",en:{en:"Picanha patty",pap:"Ku picanha",es:"Con picaña"},price:25}],
+ sides:[{id:"batata",nm:"Batata Plain",en:{en:"Sweet potato fries",pap:"Batata dushi frita",es:"Batata frita"},price:5}],
+ drinks:[{id:"awa",nm:"Awa",price:3},{id:"criolita",nm:"Criolita",price:3},{id:"pop",nm:"Pop",price:4},{id:"djus",nm:"Djus",price:5},
+   {id:"arizona",nm:"Arizona",price:5},{id:"pina",nm:"Piña Colada",price:6},{id:"bright",nm:"Amstel Bright",price:6},{id:"heineken",nm:"Heineken",price:6}]
+};
+/* icons in the style of their IG highlights: black glyph on orange */
+const ICO={
+ meats:'<svg viewBox="0 0 24 24" fill="#141210"><path d="M12 2c1 3 4 4.5 4 8.5A4 4 0 0 1 12 15a4 4 0 0 1-4-4.5c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 0-7.5zM5 17h14l-1.5 5h-11z"/></svg>',
+ platters:'<svg viewBox="0 0 24 24" fill="#141210"><path d="M3 13h18a9 9 0 0 1-18 0zm1-2a8 8 0 0 1 16 0zm7-8h2v3h-2z"/></svg>',
+ burgers:'<svg viewBox="0 0 24 24" fill="#141210"><path d="M4 10a8 6 0 0 1 16 0zm-1 2h18v2H3zm1 4h16a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/></svg>',
+ sides:'<svg viewBox="0 0 24 24" fill="#141210"><path d="M6 3h2v7H6zm4-1h2v8h-2zm4 1h2v7h-2zM4 10h16l-2 12H6z"/></svg>',
+ drinks:'<svg viewBox="0 0 24 24" fill="#141210"><path d="M6 6h12l-1.5 16h-9zM14 1l1 5h-2l-.6-3H9V1z"/></svg>'
+};
+const PIN='<svg width="22" height="22" viewBox="0 0 24 24" fill="#141210"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 3c.7 2 2.5 3 2.5 5.3A2.5 2.5 0 0 1 12 13a2.5 2.5 0 0 1-2.5-2.7C9.5 9 10.5 8 11 7.5c0 1 .5 1.7 1 1.7 0-1.8-.5-2.8 0-4.2z"/></svg>';
+
+const T={
+ en:{hi:"Best BBQ on the island. Order ahead, skip the line.",open:"Open · until",closed:"Opens 21:00 · pre-order now",at:"You're ordering at",call:"Truck phone",
+  meats:"Meats",platters:"Mix",burgers:"Burgers",sides:"Sides",drinks:"Drinks",
+  meatsS:"Every meat comes the way you like it: Pan, Flakito, Mediano, Grandi, Plain, Salad or Burrito.",plattersS:"Can't decide? Get them all on one plate.",
+  from:"from",view:"View order",add:"Add",choose:"How do you want it?",pickm:"Pick your meats",qty:"How many",note:"Note for the grill",notePh:"No onions, extra pika...",
+  your:"Your order",pickupAt:"Pick up at",name:"Name",phone:"WhatsApp number",when:"Pickup time",asap:"As soon as it's ready",payw:"Payment",
+  cash:"Cash at the truck",online:"Pay now",sentoo:"Sentoo",place:"Send order",total:"Total",keep:"Add more",need:"Fill in your name and WhatsApp so we can let you know when it's ready.",
+  inn:"Order received!",show:"Show this number at the truck",s1:"Received",s2:"On the grill",s3:"Ready, come get it",s4:"Picked up",again:"New order",rm:"Remove",sold:"Sold out tonight"},
+ pap:{hi:"Mihó BBQ di Kòrsou. Pidi promé, no hasi fila.",open:"Habrí · te",closed:"Ta habri 21:00 · pidi awor kaba",at:"Bo ta pidi na",call:"Telefòn di trùki",
+  meats:"Karni",platters:"Mix",burgers:"Burger",sides:"Banda",drinks:"Bebida",
+  meatsS:"Tur karni ta bini manera bo ke: Pan, Flakito, Mediano, Grandi, Plain, Salad òf Burrito.",plattersS:"No por disidí? Hañ'é tur riba un plato.",
+  from:"for di",view:"Mira bo pedido",add:"Agregá",choose:"Kon bo ke e?",pickm:"Skohe bo karni",qty:"Kuantu",note:"Nota pa grill",notePh:"Sin siboyo, mas pika...",
+  your:"Bo pedido",pickupAt:"Bin buska na",name:"Nòmber",phone:"Number di WhatsApp",when:"Ora di buska",asap:"Asina ku e kla",payw:"Pago",
+  cash:"Kèsh na trùki",online:"Paga awor",sentoo:"Sentoo",place:"Manda pedido",total:"Total",keep:"Agregá mas",need:"Yena bo nòmber i WhatsApp pa nos laga bo sa ora e kla.",
+  inn:"Pedido risibí!",show:"Mustra e number aki na trùki",s1:"Risibí",s2:"Riba grill",s3:"Kla, bin buska",s4:"Buská",again:"Pedido nobo",rm:"Kita",sold:"Kaba pa awe"},
+ es:{hi:"El mejor BBQ de la isla. Pide antes, sin hacer fila.",open:"Abierto · hasta",closed:"Abre 21:00 · pide ya",at:"Estás pidiendo en",call:"Teléfono del truck",
+  meats:"Carnes",platters:"Mix",burgers:"Burgers",sides:"Acompañantes",drinks:"Bebidas",
+  meatsS:"Cada carne como tú quieras: Pan, Flakito, Mediano, Grandi, Plain, Salad o Burrito.",plattersS:"¿No te decides? Todo en un plato.",
+  from:"desde",view:"Ver pedido",add:"Agregar",choose:"¿Cómo lo quieres?",pickm:"Elige tus carnes",qty:"Cantidad",note:"Nota para la parrilla",notePh:"Sin cebolla, más picante...",
+  your:"Tu pedido",pickupAt:"Recoger en",name:"Nombre",phone:"Número de WhatsApp",when:"Hora de recogida",asap:"Apenas esté listo",payw:"Pago",
+  cash:"Efectivo en el truck",online:"Pagar ahora",sentoo:"Sentoo",place:"Enviar pedido",total:"Total",keep:"Agregar más",need:"Pon tu nombre y WhatsApp para avisarte cuando esté listo.",
+  inn:"¡Pedido recibido!",show:"Muestra este número en el truck",s1:"Recibido",s2:"En la parrilla",s3:"Listo, ven a buscarlo",s4:"Recogido",again:"Nuevo pedido",rm:"Quitar",sold:"Agotado hoy"}
+};
+
+/* ---------- state ---------- */
+let lang="en",tab="meats",cart=[],view="cust",myOrder=null,seq=40,orders=[],soldOut={};
+const t=k=>T[lang][k];
+const f=n=>"ƒ "+n.toFixed(2).replace(".",",");
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const so=()=>soldOut[truck]||(soldOut[truck]=new Set());
+const desc=it=>it.en?it.en[lang]:"";
+
+/* ---------- hours (Curaçao UTC-4) ---------- */
+const HRS={0:[1260,1530],1:[1260,1560],2:[1260,1560],3:[1260,1560],4:[1260,1560],5:[1260,1650],6:[1260,1650]};
+function openState(){const d=new Date(Date.now()-4*3600e3),day=d.getUTCDay(),m=d.getUTCHours()*60+d.getUTCMinutes();
+  if(m>=HRS[day][0])return{open:true,close:HRS[day][1]};const p=HRS[(day+6)%7];if(m+1440<p[1])return{open:true,close:p[1]};return{open:false}}
+const hhmm=m=>{m%=1440;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")};
+
+/* ---------- customer ---------- */
+function langSw(){return `<div class="lang">${["en","pap","es"].map(l=>`<button data-lang="${l}" class="${lang===l?"on":""}">${l.toUpperCase()}</button>`).join("")}</div>`}
+function renderCustomer(){
+  if(myOrder) return renderTracker();
+  const os=openState(),tr=TRUCKS[truck];
+  const cnt=cart.reduce((a,b)=>a+b.qty,0),sum=cart.reduce((a,b)=>a+b.qty*b.price,0);
+  const card=(it,price,key)=>{const out=so().has(it.id);return `<button class="item ${out?"out":""}" data-open="${key}:${it.id}">
+     <div class="grow"><div class="nm">${esc(it.nm)}</div>${desc(it)?`<div class="en">${esc(desc(it))}</div>`:""}
+     <div class="pr">${out?t("sold"):price}</div></div><div class="plus">+</div></button>`};
+  const mn=p=>Math.min(...Object.values(p));
+  let list="";
+  if(tab==="meats") list=MEATS.map(m=>card(m,`${t("from")} ${f(mn(m.p))}`,"meat")).join("");
+  if(tab==="platters") list=PLATS.map(m=>card(m,`${t("from")} ${f(mn(m.p))}`,"plat")).join("");
+  if(SIMPLE[tab]) list=SIMPLE[tab].map(m=>card(m,f(m.price),"simple")).join("");
+  $("#customer").innerHTML=`
+  <header class="top">
+    <div class="toprow"><div class="open"><i class="${os.open?"":"off"}"></i>${os.open?`${t("open")} ${hhmm(os.close)}`:t("closed")}</div>${langSw()}</div>
+    <div class="brand"><img src="${IMG.logo}" alt="The Flako's Grill"><p>${t("hi")}</p></div>
+  </header>
+  <div class="truck"><div class="pin">${PIN}</div><div><small>${t("at")}</small><div class="h">${tr.nm}</div><div class="ph">${t("call")} ${tr.tel}</div></div></div>
+  <nav class="cats">${["meats","platters","burgers","sides","drinks"].map(k=>`<button class="cat ${tab===k?"on":""}" data-tab="${k}"><span class="ring"><span class="bub">${ICO[k]}</span></span>${t(k)}</button>`).join("")}</nav>
+  <section class="sec"><div class="h">${t(tab)}</div>${T[lang][tab+"S"]?`<div class="sub">${t(tab+"S")}</div>`:`<div class="sub"></div>`}${list}</section>
+  <button class="cartbar ${cnt?"":"hidden"}" id="openCart"><span><span class="cnt">${cnt}</span>${t("view")}</span><span>${f(sum)}</span></button>`;
+}
+
+function openItem(kind,id){
+  let it,styles=null,pick=0;
+  if(kind==="meat"){it=MEATS.find(x=>x.id===id);styles=it.p}
+  if(kind==="plat"){it=PLATS.find(x=>x.id===id);styles=it.p;pick=it.pick||0}
+  if(kind==="simple"){it=[...SIMPLE.burgers,...SIMPLE.sides,...SIMPLE.drinks].find(x=>x.id===id)}
+  const st={style:styles?STY.find(s=>s in styles):null,qty:1,picks:[],note:""};
+  const price=()=>styles?styles[st.style]:it.price;
+  const keep=()=>{const n=$("#inote");if(n)st.note=n.value};
+  const draw=()=>{
+    const ok=!pick||st.picks.length===pick;
+    $("#layer").innerHTML=`<div class="scrim" data-close><div class="sheet">
+      <div class="h">${esc(it.nm)}</div>${desc(it)?`<div class="en">${esc(desc(it))}</div>`:""}
+      ${styles&&Object.keys(styles).length>1?`<div class="lbl">${t("choose")}</div><div class="opts">${STY.filter(s=>s in styles).map(s=>
+        `<button class="opt ${st.style===s?"on":""}" data-style="${s}"><b>${s}</b><span>${f(styles[s])}</span></button>`).join("")}</div>`:""}
+      ${pick?`<div class="lbl">${t("pickm")} · ${st.picks.length}/${pick}</div><div class="opts">${MIXM.map(m=>
+        `<button class="opt ${st.picks.includes(m)?"on":""}" data-pick="${m}"><b>${m}</b></button>`).join("")}</div>`:""}
+      ${kind!=="simple"||tab==="burgers"?`<div class="lbl">${t("note")}</div><input id="inote" placeholder="${t("notePh")}" value="${esc(st.note)}">`:""}
+      <div class="lbl">${t("qty")}</div><div class="qty"><button data-q="-1">−</button><b>${st.qty}</b><button data-q="1">+</button></div>
+      <button class="cta" id="addIt" ${ok?"":"disabled"}><span>${t("add")}</span><span>${f(price()*st.qty)}</span></button></div></div>`;
+    const s=$(".sheet");
+    s.querySelectorAll("[data-style]").forEach(b=>b.onclick=()=>{keep();st.style=b.dataset.style;draw()});
+    s.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{keep();const m=b.dataset.pick;
+      st.picks.includes(m)?st.picks=st.picks.filter(x=>x!==m):st.picks.length<pick&&st.picks.push(m);draw()});
+    s.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{keep();st.qty=Math.max(1,st.qty+ +b.dataset.q);draw()});
+    $("#addIt").onclick=()=>{keep();cart.push({id:it.id,nm:it.nm,detail:[styles&&Object.keys(styles).length>1?st.style:"",st.picks.join(" + ")].filter(Boolean).join(" · "),
+      note:st.note,qty:st.qty,price:price()});closeLayer();renderCustomer()};
+  };draw();
+}
+
+let form={name:"",phone:"",when:"asap",pay:"cash"};
+function openCart(err){
+  const sum=cart.reduce((a,b)=>a+b.qty*b.price,0),tr=TRUCKS[truck];
+  const slots=[],base=Math.ceil((Date.now()+20*60e3)/(15*60e3))*15*60e3;
+  for(let i=0;i<6;i++){const d=new Date(base+i*15*60e3-4*3600e3);slots.push(hhmm(d.getUTCHours()*60+d.getUTCMinutes()))}
+  $("#layer").innerHTML=`<div class="scrim" data-close><div class="sheet">
+    <div class="h">${t("your")}</div>
+    ${cart.map((c,i)=>`<div class="line"><div><b>${c.qty}× ${esc(c.nm)}</b><div class="x">${esc(c.detail)}${c.note?` · “${esc(c.note)}”`:""}</div>
+      <button class="rm" data-rm="${i}">${t("rm")}</button></div><b>${f(c.qty*c.price)}</b></div>`).join("")}
+    <div class="tot"><span>${t("total")}</span><span>${f(sum)}</span></div>
+    <div class="confirmtruck"><div class="pin">${PIN}</div><div><small>${t("pickupAt")}</small><b>${tr.nm}</b></div></div>
+    <div class="lbl">${t("name")}</div><input id="fname" value="${esc(form.name)}" autocomplete="name">
+    <div class="lbl">${t("phone")}</div><input id="fphone" value="${esc(form.phone)}" inputmode="tel" placeholder="+599 9 ...">
+    <div class="lbl">${t("when")}</div><select id="fwhen"><option value="asap">${t("asap")}</option>${slots.map(s=>`<option ${form.when===s?"selected":""}>${s}</option>`).join("")}</select>
+    <div class="lbl">${t("payw")}</div><div class="paygrid">
+      <button class="opt ${form.pay==="cash"?"on":""}" data-pay="cash"><b>${t("cash")}</b><span>ƒ XCG</span></button>
+      <button class="opt ${form.pay==="sentoo"?"on":""}" data-pay="sentoo"><b>${t("online")}</b><span>${t("sentoo")}</span></button></div>
+    ${err?`<div class="err">${t("need")}</div>`:""}
+    <button class="cta" id="place"><span>${t("place")}</span><span>${f(sum)}</span></button>
+    <button class="ghost" data-closebtn>${t("keep")}</button></div></div>`;
+  const save=()=>{form.name=$("#fname").value.trim();form.phone=$("#fphone").value.trim();form.when=$("#fwhen").value};
+  document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{save();cart.splice(+b.dataset.rm,1);renderCustomer();cart.length?openCart():closeLayer()});
+  document.querySelectorAll("[data-pay]").forEach(b=>b.onclick=()=>{save();form.pay=b.dataset.pay;openCart()});
+  $("#place").onclick=()=>{save();if(!form.name||form.phone.replace(/\D/g,"").length<6)return openCart(true);
+    const o={id:Date.now(),num:++seq,name:form.name,phone:form.phone,truck,items:cart.map(c=>({...c})),total:sum,pay:form.pay,status:"new",created:Date.now(),when:form.when,mine:true};
+    orders.push(o);myOrder=o.id;cart=[];closeLayer();renderCustomer();renderKitchen();toast(`#${o.num} sent to ${TRUCKS[truck].nm}`)};
+}
+
+function renderTracker(){
+  const o=orders.find(x=>x.id===myOrder),idx={new:0,grill:1,ready:2,done:3}[o.status];
+  $("#customer").innerHTML=`<section class="track">
+    <div class="trackhead"><div class="toprow" style="justify-content:flex-end">${langSw()}</div>
+      <img src="${IMG.logo}" alt=""><div class="h">${t("inn")}</div></div>
+    <div class="ticketbig"><div class="lbl" style="margin:0">${t("show")}</div><div class="num">#${o.num}</div>
+      <div class="where">${t("pickupAt")} <span>${TRUCKS[o.truck].nm}</span> · ${o.when==="asap"?t("asap"):o.when}</div></div>
+    <div class="steps">${["s1","s2","s3","s4"].map((s,i)=>{const c=idx===3||i<idx?"done":i===idx?"now":"";return `<div class="step ${c}"><i>${c==="done"?"✓":i+1}</i>${t(s)}</div>`}).join("")}</div>
+    <div class="line" style="margin-top:14px"><span>${o.items.reduce((a,b)=>a+b.qty,0)}× · ${o.pay==="cash"?t("cash"):"Sentoo"}</span><b>${f(o.total)}</b></div>
+    <button class="ghost" id="again" style="margin-top:16px">${t("again")}</button></section>`;
+}
+
+/* ---------- kitchen (one board per truck) ---------- */
+const age=o=>Math.floor((Date.now()-o.created)/60000);
+function renderKitchen(){
+  const mine=orders.filter(o=>o.truck===truck),live=mine.filter(o=>o.status!=="done"),done=mine.filter(o=>o.status==="done");
+  const cols=[["new","New","Start grilling"],["grill","On the grill","Ready"],["ready","Ready for pickup","Picked up"]];
+  const all=[...MEATS,...PLATS,...SIMPLE.burgers,...SIMPLE.sides];
+  $("#kitchen").innerHTML=`<div class="khead">
+    <div class="kbrand"><img src="${IMG.logo}" alt=""><div><small>Kitchen board</small><div class="h">${TRUCKS[truck].nm}</div></div></div>
+    <div class="kstats"><div class="kstat">Open<b>${live.length}</b></div><div class="kstat">Tonight<b>${mine.length}</b></div>
+      <div class="kstat">Sales<b>${f(mine.reduce((a,o)=>a+o.total,0))}</b></div><button class="kbtn" id="sim">+ Test order</button></div></div>
+  <div class="board">${cols.map(([s,h,b])=>{const l=live.filter(o=>o.status===s).sort((a,b)=>a.created-b.created);
+    return `<div class="col c-${s}"><h2>${h}<em>${l.length}</em></h2>${l.length?l.map(o=>{const a=age(o);return `<div class="ticket">
+      <div class="t-top"><span class="t-num">#${o.num}</span><span class="t-time ${a>=20?"late":a>=10?"warn":""}">${a} min</span></div>
+      <div class="t-who"><b>${esc(o.name)}</b> · ${esc(o.phone)} · ${o.when==="asap"?"ASAP":"Pickup "+o.when}</div>
+      <div class="t-items">${o.items.map(i=>`<div><b>${i.qty}×</b> ${esc(i.nm)}${i.detail?` · ${esc(i.detail)}`:""}${i.note?`<small>↳ ${esc(i.note)}</small>`:""}</div>`).join("")}</div>
+      <div class="t-foot"><span class="pay ${o.pay==="cash"?"cash":""}">${o.pay==="cash"?"CASH":"PAID SENTOO"}</span><span>${f(o.total)}</span></div>
+      <button class="bump" data-bump="${o.id}">${b} →</button></div>`}).join(""):`<div class="empty">No tickets</div>`}</div>`}).join("")}</div>
+  <div class="klbl">Sold out at ${TRUCKS[truck].nm} · tap to switch off (only this truck's menu changes)</div>
+  <div class="eighty6">${all.map(i=>`<button data-86="${i.id}" class="${so().has(i.id)?"out":""}">${esc(i.nm)}</button>`).join("")}</div>
+  ${done.length?`<div class="done-list">Picked up: ${done.map(o=>"#"+o.num).join(", ")}</div>`:""}`;
+  const n=live.filter(o=>o.status==="new").length,bd=$("#kBadge");bd.textContent=n;bd.classList.toggle("hidden",!n);
+}
+
+/* ---------- test orders ---------- */
+const NAMES=["Jurgen","Shaline","Ricardo","Naomi","Gino","Kenrick","Maritza","Dwayne","Yaniska","Edsel","Rignald","Chanella"];
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+function sim(tk,ago=0){
+  const items=[],n=1+Math.floor(Math.random()*3);
+  for(let i=0;i<n;i++){const r=Math.random();
+    if(r<.6){const m=rnd(MEATS),s=rnd(Object.keys(m.p));items.push({nm:m.nm,detail:s,qty:Math.random()<.25?2:1,price:m.p[s],note:Math.random()<.2?rnd(["No onions","Extra pika","Sauce on the side"]):""})}
+    else if(r<.75){const p=rnd(PLATS.slice(0,2)),ms=[...MIXM].sort(()=>Math.random()-.5).slice(0,p.pick);items.push({nm:p.nm,detail:"Grandi · "+ms.join(" + "),qty:1,price:p.p.Grandi,note:""})}
+    else{const d=rnd(SIMPLE.drinks.concat(SIMPLE.burgers));items.push({nm:d.nm,detail:"",qty:Math.random()<.4?2:1,price:d.price,note:""})}}
+  const o={id:Date.now()+Math.random(),num:++seq,name:rnd(NAMES),phone:"+599 9 "+(5100000+Math.floor(Math.random()*899999)).toString().replace(/(\d{3})(\d{4})/,"$1 $2"),
+    truck:tk,items,total:items.reduce((a,b)=>a+b.qty*b.price,0),pay:Math.random()<.6?"cash":"sentoo",status:"new",created:Date.now()-ago*60000,when:"asap"};
+  orders.push(o);return o;
+}
+Object.keys(TRUCKS).forEach(k=>{sim(k,15).status="grill";sim(k,22).status="ready";sim(k,5);sim(k,1)});
+
+/* ---------- events ---------- */
+function closeLayer(){$("#layer").innerHTML=""}
+function toast(m){const d=document.createElement("div");d.className="toast";d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),1900)}
+function setView(v){view=v;$("#customer").classList.toggle("hidden",v!=="cust");$("#kitchen").classList.toggle("hidden",v!=="kit");
+  $("#vCust").classList.toggle("on",v==="cust");$("#vKit").classList.toggle("on",v==="kit");try{scrollTo(0,0)}catch(e){}}
+function setTruck(k){truck=k;cart=[];myOrder=null;tab="meats";closeLayer();
+  try{history.replaceState(null,"","#"+k)}catch(e){location.hash=k}
+  document.querySelectorAll("[data-truck]").forEach(b=>b.classList.toggle("on",b.dataset.truck===k));renderCustomer();renderKitchen()}
+$("#vCust").onclick=()=>{setView("cust");renderCustomer()};
+$("#vKit").onclick=()=>{setView("kit");renderKitchen()};
+addEventListener("hashchange",()=>{const k=location.hash.slice(1);if(TRUCKS[k]&&k!==truck)setTruck(k)});
+document.addEventListener("click",e=>{
+  const g=s=>e.target.closest(s);let b;
+  if(e.target.matches("[data-close]")||g("[data-closebtn]"))return closeLayer();
+  if(b=g("[data-truck]"))return setTruck(b.dataset.truck);
+  if(b=g("[data-lang]")){lang=b.dataset.lang;return renderCustomer()}
+  if(b=g("[data-tab]")){tab=b.dataset.tab;return renderCustomer()}
+  if(b=g("[data-open]")){const[k,id]=b.dataset.open.split(":");return openItem(k,id)}
+  if(g("#openCart"))return openCart();
+  if(g("#again")){myOrder=null;return renderCustomer()}
+  if(b=g("[data-bump]")){const o=orders.find(x=>String(x.id)===b.dataset.bump);o.status={new:"grill",grill:"ready",ready:"done"}[o.status];
+    renderKitchen();if(o.id===myOrder)renderCustomer();if(o.status==="ready")toast(`#${o.num} ready · WhatsApp sent to ${o.name}`);return}
+  if(b=g("[data-86]")){const id=b.dataset["86"];so().has(id)?so().delete(id):so().add(id);renderKitchen();return renderCustomer()}
+  if(g("#sim")){const o=sim(truck);renderKitchen();return toast(`New order #${o.num}`)}
+});
+setInterval(()=>{if(view==="kit")renderKitchen()},30000);
+setTruck(truck);
+</script>
+</body>
+</html>
